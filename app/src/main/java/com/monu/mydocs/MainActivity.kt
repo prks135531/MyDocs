@@ -123,89 +123,150 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun buildUi() {
-        val frame = FrameLayout(this).apply { setBackgroundColor(0xFF101418.toInt()) }
-        val page = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        val scroll = ScrollView(this).apply { clipToPadding = false; setPadding(0, 0, 0, dp(96)) }
-        val content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(20), dp(18), dp(20), dp(8)) }
-        val header = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-        val logo = ImageView(this).apply {
-            setImageResource(R.drawable.mydocs_logo)
-            scaleType = ImageView.ScaleType.FIT_CENTER
-            contentDescription = "MyDocs logo"
+        window.statusBarColor = Color.BLACK
+        window.navigationBarColor = Color.BLACK
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.BLACK)
         }
-        header.addView(logo, LinearLayout.LayoutParams(dp(54), dp(54)).apply { marginEnd = dp(12) })
-        val brand = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        brand.addView(TextView(this).apply { text = "MyDocs"; textSize = 25f; setTextColor(Color.WHITE); typeface = android.graphics.Typeface.DEFAULT_BOLD })
-        brand.addView(TextView(this).apply { text = "Your documents, organized"; textSize = 13f; setTextColor(0xFF9BAAA7.toInt()) })
-        header.addView(brand, LinearLayout.LayoutParams(0, -2, 1f))
-        header.addView(TextView(this).apply { text = "♙"; textSize = 25f; setTextColor(0xFF55D6C2.toInt()); setPadding(dp(10), 0, dp(4), 0) })
-        content.addView(header)
+        val toolbar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(16), 0, dp(12), 0)
+            setBackgroundColor(0xFF222222.toInt())
+        }
+        fun topAction(symbol: String, label: String, click: () -> Unit) = TextView(this).apply {
+            text = symbol
+            contentDescription = label
+            textSize = 27f
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+            setOnClickListener { click() }
+        }
+        toolbar.addView(topAction("☰", "Menu") { showFolderPicker() }, LinearLayout.LayoutParams(dp(48), dp(62)))
+        val title = TextView(this).apply {
+            text = "My Docs"
+            textSize = 23f
+            typeface = android.graphics.Typeface.DEFAULT
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        toolbar.addView(title, LinearLayout.LayoutParams(0, dp(62), 1f).apply { leftMargin = dp(10) })
+        toolbar.addView(topAction("⌕", "Search") {
+            searchInput.visibility = if (searchInput.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+            if (searchInput.visibility == View.VISIBLE) searchInput.requestFocus()
+        }, LinearLayout.LayoutParams(dp(48), dp(62)))
+        toolbar.addView(topAction("☁", "Smart scan") { launchScanner() }, LinearLayout.LayoutParams(dp(48), dp(62)))
+        toolbar.addView(topAction("⋮", "More") { showHomeMenu() }, LinearLayout.LayoutParams(dp(36), dp(62)))
+        root.addView(toolbar)
+
+        val scroll = ScrollView(this).apply {
+            clipToPadding = false
+            setPadding(0, 0, 0, dp(10))
+        }
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(8), dp(16), dp(12))
+            setBackgroundColor(Color.BLACK)
+        }
         searchInput = EditText(this).apply {
-            hint = "⌕  Search documents..."; textSize = 16f; setSingleLine(true)
-            setTextColor(Color.WHITE); setHintTextColor(0xFF9BAAA7.toInt()); setPadding(dp(16), 0, dp(16), 0)
-            background = android.graphics.drawable.GradientDrawable().apply { setColor(0xFF20292D.toInt()); cornerRadius = dp(22).toFloat() }
+            hint = "Search documents"
+            textSize = 15f
+            setSingleLine(true)
+            setTextColor(Color.WHITE)
+            setHintTextColor(0xFF9E9E9E.toInt())
+            setPadding(dp(12), 0, dp(12), 0)
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(0xFF292929.toInt()); cornerRadius = dp(8).toFloat()
+            }
+            visibility = View.GONE
             addTextChangedListener(object : android.text.TextWatcher {
                 override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
                 override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { refreshList() }
                 override fun afterTextChanged(s: android.text.Editable?) {}
             })
         }
-        content.addView(searchInput, LinearLayout.LayoutParams(-1, dp(58)).apply { topMargin = dp(22); bottomMargin = dp(16) })
-        val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        actions.addView(actionCard("▤", "Scan Document", "Camera scanner", 0xFF173F3A.toInt(), 0xFF61DCC6.toInt()) { startScan() }, LinearLayout.LayoutParams(0, dp(142), 1f).apply { marginEnd = dp(7) })
-        actions.addView(actionCard("⇧", "Import PDF", "From your phone", 0xFF26364E.toInt(), 0xFF91B9FF.toInt()) { importLauncher.launch(arrayOf("application/pdf")) }, LinearLayout.LayoutParams(0, dp(142), 1f).apply { marginStart = dp(7) })
-        content.addView(actions)
-        val pdfTools = LinearLayout(this).apply {
+        content.addView(searchInput, LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(8); bottomMargin = dp(8) })
+
+        val pathBar = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(14), dp(10), dp(14), dp(10))
-            background = android.graphics.drawable.GradientDrawable().apply { setColor(0xFF20292D.toInt()); cornerRadius = dp(14).toFloat() }
+            setPadding(dp(2), dp(10), dp(2), dp(8))
         }
-        pdfTools.addView(TextView(this).apply {
-            text = "PDF Tools"
+        folderPathLabel = TextView(this).apply {
+            text = "All Documents"
             textSize = 14f
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-            setTextColor(Color.WHITE)
-        }, LinearLayout.LayoutParams(0, -2, 1f))
-        pdfTools.addView(actionButton("Merge PDFs") { mergeLauncher.launch(arrayOf("application/pdf")) })
-        pdfTools.addView(actionButton("Split PDF") { splitLauncher.launch(arrayOf("application/pdf")) }.apply { setPadding(dp(8), 0, dp(8), 0) })
-        content.addView(pdfTools, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(10) })
-        val folderHeader = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-        folderHeader.addView(TextView(this).apply { text = "My Folders"; textSize = 19f; typeface = android.graphics.Typeface.DEFAULT_BOLD; setTextColor(Color.WHITE) }, LinearLayout.LayoutParams(0, -2, 1f))
-        folderHeader.addView(TextView(this).apply { text = "+ Folder"; textSize = 14f; setTextColor(Color.WHITE); gravity = Gravity.CENTER; setPadding(dp(12), dp(8), dp(12), dp(8)); background = android.graphics.drawable.GradientDrawable().apply { setColor(0xFF087F78.toInt()); cornerRadius = dp(12).toFloat() }; setOnClickListener { createFolder() } })
-        folderHeader.addView(TextView(this).apply { text = "View all  ›"; textSize = 14f; setTextColor(0xFF55D6C2.toInt()); setPadding(dp(12), dp(8), 0, dp(8)); setOnClickListener { showFolderPicker() } })
-        content.addView(folderHeader, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(24); bottomMargin = dp(12) })
-        folderPathLabel = TextView(this).apply { text = "All Documents"; textSize = 12f; setTextColor(0xFF9BAAA7.toInt()); setOnClickListener { showFolderPicker() } }
-        content.addView(folderPathLabel, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) })
+            setTextColor(0xFFBDBDBD.toInt())
+            setOnClickListener { showFolderPicker() }
+        }
+        pathBar.addView(folderPathLabel, LinearLayout.LayoutParams(0, -2, 1f))
+        pathBar.addView(TextView(this).apply {
+            text = "+ Folder"
+            textSize = 14f
+            setTextColor(0xFF80CBC4.toInt())
+            setPadding(dp(10), dp(8), dp(6), dp(8))
+            setOnClickListener { createFolder() }
+        })
+        content.addView(pathBar)
         folderStrip = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         content.addView(folderStrip)
-        val docsHeader = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-        count = TextView(this).apply { textSize = 18f; setTextColor(Color.WHITE); typeface = android.graphics.Typeface.DEFAULT_BOLD; setSingleLine(true); ellipsize = android.text.TextUtils.TruncateAt.END }
+        val docsHeader = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, dp(14), 0, dp(8))
+        }
+        count = TextView(this).apply {
+            textSize = 17f
+            setTextColor(Color.WHITE)
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            setSingleLine(true)
+            ellipsize = android.text.TextUtils.TruncateAt.END
+        }
         docsHeader.addView(count, LinearLayout.LayoutParams(0, -2, 1f))
-        docsHeader.addView(TextView(this).apply { text = "☷"; textSize = 25f; setTextColor(0xFF61DCC6.toInt()); setPadding(dp(8), dp(4), dp(8), dp(4)); setOnClickListener { gridView = false; refreshList() } })
-        docsHeader.addView(TextView(this).apply { text = "▦"; textSize = 23f; setTextColor(0xFF61DCC6.toInt()); setPadding(dp(8), dp(4), 0, dp(4)); setOnClickListener { gridView = true; refreshList() } })
-        content.addView(docsHeader, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(24); bottomMargin = dp(12) })
+        docsHeader.addView(TextView(this).apply {
+            text = "☷"; textSize = 25f; setTextColor(Color.WHITE); setPadding(dp(8), 0, dp(8), 0)
+            setOnClickListener { gridView = false; refreshList() }
+        })
+        docsHeader.addView(TextView(this).apply {
+            text = "▦"; textSize = 23f; setTextColor(Color.WHITE)
+            setOnClickListener { gridView = true; refreshList() }
+        })
+        content.addView(docsHeader)
         list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         content.addView(list)
         scroll.addView(content)
-        page.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+
         val bottom = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER; setPadding(dp(8), dp(8), dp(8), dp(8))
-            background = android.graphics.drawable.GradientDrawable().apply { setColor(0xFF151D20.toInt()); cornerRadius = dp(20).toFloat() }
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setBackgroundColor(0xFF222222.toInt())
+            setPadding(dp(8), dp(8), dp(8), dp(8))
         }
-        bottom.addView(navItem("⌂", "Home", true) { favoritesMode = false; refreshList(); scroll.smoothScrollTo(0, 0) }, LinearLayout.LayoutParams(0, dp(66), 1f))
-        bottom.addView(navItem("▱", "Files", false) { showFolderPicker() }, LinearLayout.LayoutParams(0, dp(66), 1f))
-        bottom.addView(navItem("☆", "Favorites", false) { favoritesMode = true; if (::searchInput.isInitialized) searchInput.setText(""); refreshList() }, LinearLayout.LayoutParams(0, dp(66), 1f))
-        bottom.addView(navItem("⚙", "Settings", false) { toast("Settings feature coming soon") }, LinearLayout.LayoutParams(0, dp(66), 1f))
-        page.addView(bottom, LinearLayout.LayoutParams(-1, dp(82)).apply { leftMargin = dp(16); rightMargin = dp(16); bottomMargin = dp(8) })
-        frame.addView(page)
-        val fab = TextView(this).apply {
-            text = "＋"; textSize = 30f; gravity = Gravity.CENTER; setTextColor(Color.WHITE); elevation = dp(9).toFloat()
-            background = android.graphics.drawable.GradientDrawable().apply { setColor(0xFF087F78.toInt()); cornerRadius = dp(30).toFloat() }
+        bottom.addView(TextView(this).apply {
+            text = "▧"; textSize = 34f; gravity = Gravity.CENTER; setTextColor(Color.WHITE)
+            setOnClickListener { importLauncher.launch(arrayOf("application/pdf")) }
+        }, LinearLayout.LayoutParams(dp(76), dp(68)))
+        bottom.addView(TextView(this).apply {
+            text = "●"; textSize = 43f; gravity = Gravity.CENTER; setTextColor(Color.WHITE)
             setOnClickListener { startScan() }
-        }
-        frame.addView(fab, FrameLayout.LayoutParams(dp(62), dp(62), Gravity.BOTTOM or Gravity.END).apply { rightMargin = dp(24); bottomMargin = dp(104) })
-        setContentView(frame)
+        }, LinearLayout.LayoutParams(dp(76), dp(68)))
+        root.addView(bottom, LinearLayout.LayoutParams(-1, dp(84)))
+        setContentView(root)
+    }
+
+    private fun showHomeMenu() {
+        val items = arrayOf("Create folder", "Import PDF", "Merge PDFs", "Split PDF", "Favorites", "Settings")
+        AlertDialog.Builder(this).setItems(items) { _, which ->
+            when (which) {
+                0 -> createFolder()
+                1 -> importLauncher.launch(arrayOf("application/pdf"))
+                2 -> mergeLauncher.launch(arrayOf("application/pdf"))
+                3 -> splitLauncher.launch(arrayOf("application/pdf"))
+                4 -> { favoritesMode = true; refreshList() }
+                5 -> toast("Settings")
+            }
+        }.show()
     }
 
     private fun actionCard(icon: String, title: String, subtitle: String, bg: Int, accent: Int, click: () -> Unit): View {
@@ -860,7 +921,7 @@ class MainActivity : ComponentActivity() {
                         val childCount = folder.listFiles()?.count { it.isFile && it.extension.equals("pdf", true) } ?: 0
                         val card = LinearLayout(this).apply {
                             orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(15), dp(12), dp(10), dp(12))
-                            background = android.graphics.drawable.GradientDrawable().apply { setColor(0xFF20292D.toInt()); cornerRadius = dp(18).toFloat() }
+                            background = android.graphics.drawable.GradientDrawable().apply { setColor(Color.BLACK); cornerRadius = dp(2).toFloat() }
                             setOnClickListener { currentFolder = folder; if (::searchInput.isInitialized) searchInput.setText(""); refreshList() }
                             setOnLongClickListener { showFolderMenu(folder); true }
                         }
@@ -887,11 +948,11 @@ class MainActivity : ComponentActivity() {
                         val file = files[index++]
                         val card = LinearLayout(this).apply {
                             orientation = LinearLayout.VERTICAL; setPadding(dp(12), dp(14), dp(8), dp(10))
-                            background = android.graphics.drawable.GradientDrawable().apply { setColor(0xFF18221F.toInt()); cornerRadius = dp(14).toFloat(); setStroke(dp(1), 0xFF293832.toInt()) }
+                            background = android.graphics.drawable.GradientDrawable().apply { setColor(Color.BLACK); cornerRadius = dp(2).toFloat() }
                             setOnClickListener { openPdf(file) }
                         }
                         val top = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-                        top.addView(TextView(this).apply { text = "▤"; textSize = 26f; setTextColor(0xFFFF8C83.toInt()) }, LinearLayout.LayoutParams(0, -2, 1f))
+                        top.addView(TextView(this).apply { text = "▤"; textSize = 26f; setTextColor(0xFFBDBDBD.toInt()) }, LinearLayout.LayoutParams(0, -2, 1f))
                         top.addView(TextView(this).apply { text = "⋮"; textSize = 22f; setTextColor(Color.WHITE); setOnClickListener { showFileMenu(file) } })
                         card.addView(top)
                         card.addView(TextView(this).apply { text = file.name; textSize = 13f; setTextColor(Color.WHITE); maxLines = 2; ellipsize = android.text.TextUtils.TruncateAt.END; setPadding(0, dp(8), 0, dp(4)) })
@@ -905,9 +966,9 @@ class MainActivity : ComponentActivity() {
             files.forEach { file ->
                 val row = LinearLayout(this).apply {
                     orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(12), dp(13), dp(6), dp(13))
-                    background = android.graphics.drawable.GradientDrawable().apply { setColor(0xFF18221F.toInt()); cornerRadius = dp(12).toFloat() }
+                    background = android.graphics.drawable.GradientDrawable().apply { setColor(Color.BLACK); cornerRadius = dp(2).toFloat() }
                 }
-                row.addView(TextView(this).apply { text = "▤"; textSize = 27f; setTextColor(0xFFFF8C83.toInt()); setPadding(0, 0, dp(12), 0) })
+                row.addView(TextView(this).apply { text = "▤"; textSize = 27f; setTextColor(0xFFBDBDBD.toInt()); setPadding(0, 0, dp(12), 0) })
                 val info = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
                 info.addView(TextView(this).apply { text = file.name; textSize = 14f; setTextColor(Color.WHITE); maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END })
                 info.addView(TextView(this).apply { text = formatSize(file.length()) + "  •  " + DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(file.lastModified())); textSize = 11f; setTextColor(0xFF91A29D.toInt()); setPadding(0, dp(4), 0, 0) })

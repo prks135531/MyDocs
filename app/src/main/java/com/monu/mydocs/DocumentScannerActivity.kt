@@ -242,7 +242,7 @@ class DocumentScannerActivity : ComponentActivity() {
             modeRow.addView(item, LinearLayout.LayoutParams(0, dp(42), 1f))
         }
         updateModeButtons()
-        root.addView(warningView, LinearLayout.LayoutParams(-1, dp(38)))
+        warningView.visibility = View.GONE
 
         val thumbnailStrip = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -317,7 +317,7 @@ class DocumentScannerActivity : ComponentActivity() {
         }
         val bottom = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(0xFF101719.toInt())
+            setBackgroundColor(0xFF222222.toInt())
         }
         bottom.addView(modeRow, LinearLayout.LayoutParams(-1, dp(48)))
         bottom.addView(thumbnailScroll, LinearLayout.LayoutParams(-1, dp(44)))
