@@ -479,7 +479,7 @@ class MainActivity : ComponentActivity() {
             override fun onStartTrackingTouch(s: SeekBar?) {}
             override fun onStopTrackingTouch(s: SeekBar?) {}
         })
-        fun button(text: String, action: () -> Unit) = Button(this).apply { this.text = text; isAllCaps = false; setOnClickListener { action() } }
+        fun button(text: String, action: () -> Unit) = Button(this).apply { this.text = text; isAllCaps = false; textSize = 13f; setTextColor(Color.WHITE); backgroundTintList = android.content.res.ColorStateList.valueOf(0xFF303030.toInt()); setOnClickListener { action() } }
         refreshThumbnails = {
             thumbnailStrip.removeAllViews()
             pages.forEachIndexed { index, uri ->
@@ -510,11 +510,29 @@ class MainActivity : ComponentActivity() {
                 thumbnailStrip.addView(thumb)
             }
         }
-        val controls = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(12),dp(8),dp(12),dp(8)); setBackgroundColor(0xFF101614.toInt()) }
+        val controls = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(12),dp(8),dp(12),dp(8)); setBackgroundColor(0xFF222222.toInt()) }
+        label.textSize = 15f
+        label.setTextColor(0xFFBDBDBD.toInt())
         controls.addView(label)
-        controls.addView(image, LinearLayout.LayoutParams(-1, dp(260)))
-        controls.addView(TextView(this).apply { text="Filter"; setTextColor(Color.WHITE) })
-        controls.addView(filter)
+        val filterTabs = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER; setBackgroundColor(0xFF222222.toInt()) }
+        val tabNames = listOf("Original", "Photo", "Docs", "Clear", "Color")
+        val tabFilters = listOf(0, 3, 1, 2, 3)
+        tabNames.forEachIndexed { i, name ->
+            filterTabs.addView(TextView(this).apply {
+                text = name; textSize = 13f; gravity = Gravity.CENTER; setTextColor(Color.WHITE)
+                setPadding(dp(7), dp(12), dp(7), dp(12))
+                setBackgroundColor(if (i == 0) 0xFF008F83.toInt() else 0xFF222222.toInt())
+                setOnClickListener {
+                    filter.setSelection(tabFilters[i].coerceAtMost(filterNames.lastIndex))
+                    for (j in 0 until filterTabs.childCount) filterTabs.getChildAt(j).setBackgroundColor(if (i == j) 0xFF008F83.toInt() else 0xFF222222.toInt())
+                }
+            }, LinearLayout.LayoutParams(0, dp(48), 1f))
+        }
+        controls.addView(filterTabs)
+        filter.visibility = View.GONE
+        val imageStage = FrameLayout(this).apply { setBackgroundColor(0xFFDDDDDD.toInt()); setPadding(dp(8), dp(8), dp(8), dp(8)) }
+        imageStage.addView(image, FrameLayout.LayoutParams(-1, -1))
+        controls.addView(imageStage, LinearLayout.LayoutParams(-1, dp(300)))
         controls.addView(applyAll)
         val batchFilterRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER }
         batchFilterRow.addView(button("Apply to selected") {
@@ -539,12 +557,22 @@ class MainActivity : ComponentActivity() {
             toast("Filter applied to all pages")
         }, LinearLayout.LayoutParams(0, -2, 1f))
         controls.addView(batchFilterRow)
-        controls.addView(TextView(this).apply { text="Brightness"; setTextColor(Color.WHITE) })
-        controls.addView(brightnessBar)
-        controls.addView(TextView(this).apply { text="Contrast"; setTextColor(Color.WHITE) })
-        controls.addView(contrastBar)
-        controls.addView(TextView(this).apply { text="Sharpness"; setTextColor(Color.WHITE) })
-        controls.addView(sharpnessBar)
+        val adjustmentPanel = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(8), dp(8), dp(8), dp(4)); background = android.graphics.drawable.GradientDrawable().apply { setColor(0xFF292929.toInt()); cornerRadius = dp(8).toFloat() } }
+        fun adjustmentRow(name: String, bar: SeekBar, symbol: String) {
+            val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            row.addView(TextView(this).apply { text = symbol; textSize = 21f; gravity = Gravity.CENTER; setTextColor(Color.WHITE) }, LinearLayout.LayoutParams(dp(38), dp(44)))
+            val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+            col.addView(TextView(this).apply { text = name; textSize = 13f; setTextColor(0xFFDDDDDD.toInt()) })
+            col.addView(bar)
+            row.addView(col, LinearLayout.LayoutParams(0, -2, 1f))
+            adjustmentPanel.addView(row)
+            bar.progressTintList = android.content.res.ColorStateList.valueOf(0xFF008F83.toInt())
+            bar.thumbTintList = android.content.res.ColorStateList.valueOf(0xFF008F83.toInt())
+        }
+        adjustmentRow("Brightness", brightnessBar, "☼")
+        adjustmentRow("Contrast", contrastBar, "◐")
+        adjustmentRow("Sharpness", sharpnessBar, "☀")
+        controls.addView(adjustmentPanel)
         controls.addView(TextView(this).apply { text="Image enhancement"; setTextColor(Color.WHITE) })
         controls.addView(enhancement)
         controls.addView(TextView(this).apply { text="PDF page size"; setTextColor(Color.WHITE) })
@@ -726,25 +754,27 @@ class MainActivity : ComponentActivity() {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(12), dp(10), dp(12), dp(10))
-            setBackgroundColor(0xFF101614.toInt())
+            setBackgroundColor(Color.BLACK)
         }
         val heading = TextView(this).apply {
-            text = "Adjust document corners"
-            textSize = 19f
+            text = "‹    Border adjustment"
+            textSize = 21f
             setTextColor(Color.WHITE)
-            gravity = Gravity.CENTER
-            setPadding(0, dp(4), 0, dp(6))
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(18), 0, 0, 0)
+            setBackgroundColor(0xFF222222.toInt())
         }
         val hint = TextView(this).apply {
-            text = "Drag the 4 green handles to fit the page"
-            textSize = 13f
-            setTextColor(0xFFB8C8C3.toInt())
+            text = "Drag the green handles to adjust document edges"
+            textSize = 12f
+            setTextColor(0xFFBDBDBD.toInt())
+            setBackgroundColor(Color.BLACK)
             gravity = Gravity.CENTER
             setPadding(0, 0, 0, dp(10))
         }
         val editor = PerspectiveCropView(this, source)
-        root.addView(heading, LinearLayout.LayoutParams(-1, dp(34)))
-        root.addView(hint, LinearLayout.LayoutParams(-1, dp(30)))
+        root.addView(heading, LinearLayout.LayoutParams(-1, dp(62)))
+        root.addView(hint, LinearLayout.LayoutParams(-1, dp(34)))
         root.addView(editor, LinearLayout.LayoutParams(-1, 0, 1f))
 
         fun toolButton(title: String, action: () -> Unit) = Button(this).apply {
@@ -753,22 +783,17 @@ class MainActivity : ComponentActivity() {
             textSize = 13f
             setOnClickListener { action() }
         }
-        val tools = LinearLayout(this).apply {
-            gravity = Gravity.CENTER
-            orientation = LinearLayout.HORIZONTAL
-            setPadding(0, dp(8), 0, dp(4))
-        }
-        tools.addView(toolButton("Auto Crop") { editor.autoCrop() }, LinearLayout.LayoutParams(0, dp(48), 1f))
-        tools.addView(toolButton("Full Image") { editor.fullImage() }, LinearLayout.LayoutParams(0, dp(48), 1f))
+        val tools = LinearLayout(this).apply { gravity = Gravity.CENTER; orientation = LinearLayout.HORIZONTAL; setPadding(dp(4), dp(8), dp(4), dp(4)); setBackgroundColor(0xFF222222.toInt()) }
+        tools.addView(toolButton("＋") { editor.autoCrop() }, LinearLayout.LayoutParams(0, dp(54), 1f))
+        tools.addView(toolButton("□") { editor.fullImage() }, LinearLayout.LayoutParams(0, dp(54), 1f))
+        tools.addView(toolButton("↶") { editor.fullImage() }, LinearLayout.LayoutParams(0, dp(54), 1f))
+        tools.addView(toolButton("↻") { editor.autoCrop() }, LinearLayout.LayoutParams(0, dp(54), 1f))
         root.addView(tools)
 
-        val footer = LinearLayout(this).apply {
-            gravity = Gravity.CENTER
-            orientation = LinearLayout.HORIZONTAL
-        }
+        val footer = LinearLayout(this).apply { gravity = Gravity.CENTER; orientation = LinearLayout.HORIZONTAL; setBackgroundColor(0xFF222222.toInt()); setPadding(dp(8), dp(4), dp(8), dp(4)) }
         val dialog = AlertDialog.Builder(this).setView(root).create()
-        val cancel = toolButton("Cancel") { dialog.dismiss() }
-        val apply = toolButton("Apply Crop") {
+        val cancel = toolButton("✕") { dialog.dismiss() }
+        val apply = toolButton("✓") {
             try {
                 val p = editor.sourcePoints()
                 val tl = PointF(p[0], p[1])
@@ -1398,12 +1423,13 @@ class MainActivity : ComponentActivity() {
             lateinit var dialog: AlertDialog
             val content = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
-                setBackgroundColor(0xFF101614.toInt())
+                setBackgroundColor(Color.BLACK)
             }
             val top = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
                 setPadding(dp(16), dp(10), dp(8), dp(10))
+                setBackgroundColor(0xFF222222.toInt())
             }
             val title = TextView(this).apply {
                 text = file.name
@@ -1438,9 +1464,10 @@ class MainActivity : ComponentActivity() {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER
                 setPadding(dp(12), dp(8), dp(12), dp(12))
+                setBackgroundColor(0xFF222222.toInt())
             }
-            val previous = Button(this).apply { text = "‹ Previous"; isAllCaps = false }
-            val next = Button(this).apply { text = "Next ›"; isAllCaps = false }
+            val previous = Button(this).apply { text = "‹"; textSize = 24f; isAllCaps = false; setTextColor(Color.WHITE); backgroundTintList = android.content.res.ColorStateList.valueOf(0xFF333333.toInt()) }
+            val next = Button(this).apply { text = "›"; textSize = 24f; isAllCaps = false; setTextColor(Color.WHITE); backgroundTintList = android.content.res.ColorStateList.valueOf(0xFF333333.toInt()) }
             controls.addView(previous, LinearLayout.LayoutParams(0, -2, 1f))
             controls.addView(next, LinearLayout.LayoutParams(0, -2, 1f))
             content.addView(controls)
