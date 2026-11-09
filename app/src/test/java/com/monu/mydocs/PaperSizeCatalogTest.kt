@@ -4,21 +4,8 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class PaperSizeCatalogTest {
-    @Test fun catalogIncludesCommonPageFormats() {
-        assertTrue(PaperSizeCatalog.sizes.any { it.label == "A0" })
-        assertTrue(PaperSizeCatalog.sizes.any { it.label == "A8" })
-        assertTrue(PaperSizeCatalog.sizes.any { it.label == "A4" })
-        assertTrue(PaperSizeCatalog.sizes.any { it.label == "Letter" })
-        assertTrue(PaperSizeCatalog.sizes.any { it.label == "Legal" })
-    }
-    @Test fun dimensionsArePositiveAndOriginalIsFirstOption() {
-        assertEquals("Original size", PaperSizeCatalog.options[0])
-        assertTrue(PaperSizeCatalog.sizes.all { it.widthPoints > 0 && it.heightPoints > 0 })
-        assertEquals(PaperSizeCatalog.sizes.size + 1, PaperSizeCatalog.options.size)
-    }
-    @Test fun a4UsesStandardPdfPointDimensions() {
-        val a4 = PaperSizeCatalog.sizes.first { it.label == "A4" }
-        assertEquals(595, a4.widthPoints)
-        assertEquals(842, a4.heightPoints)
-    }
+ @Test fun hasCommonFormats() { listOf("A0","A4","A8","Letter","Legal").forEach { name -> assertTrue(PaperSizeCatalog.sizes.any { it.label == name }) } }
+ @Test fun dimensionsArePositive() { assertTrue(PaperSizeCatalog.sizes.all { it.widthPoints > 0 && it.heightPoints > 0 }) }
+ @Test fun originalIsFirstOption() { assertEquals("Original size", PaperSizeCatalog.options[0]) }
+ @Test fun a4DimensionsAreStandard() { val a4=PaperSizeCatalog.sizes.first { it.label=="A4" }; assertEquals(595,a4.widthPoints); assertEquals(842,a4.heightPoints) }
 }

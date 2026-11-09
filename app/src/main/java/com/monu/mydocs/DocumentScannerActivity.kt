@@ -40,6 +40,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import java.io.File
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
+import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
+import androidx.activity.result.IntentSenderRequest
 import java.util.concurrent.Executors
 
 class DocumentScannerActivity : ComponentActivity() {
@@ -55,6 +59,39 @@ class DocumentScannerActivity : ComponentActivity() {
     private val pages = arrayListOf<Uri>()
     private val folder by lazy { File(filesDir, "MyDocs/.scan_${System.currentTimeMillis()}").apply { mkdirs() } }
     private val permission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { if (it) bindCamera() else finish() }
+
+    private val smartScan = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val scan = GmsDocumentScanningResult.fromActivityResultIntent(result.data)
+            val images = scan?.pages.orEmpty()
+            images.forEachIndexed { index, page ->
+                runCatching {
+                    val target = File(folder, "smart_${System.currentTimeMillis()}_${index + 1}.jpg")
+                    contentResolver.openInputStream(page.imageUri)?.use { input ->
+                        target.outputStream().use { output -> input.copyTo(output) }
+                    }
+                    if (target.length() > 0L) pages.add(FileProvider.getUriForFile(this, "$"+"packageName.provider", target))
+                }
+            }
+            countView?.text = "${pages.size} pages"
+            updateCaptureThumbnails()
+            if (images.isNotEmpty()) warningView.text = "Smart scan pages added"
+        }
+    }
+
+    private fun launchSmartScan() {
+        val options = GmsDocumentScannerOptions.Builder()
+            .setGalleryImportAllowed(true)
+            .setPageLimit(50)
+            .setResultFormats(GmsDocumentScannerOptions.RESULT_FORMAT_JPEG, GmsDocumentScannerOptions.RESULT_FORMAT_PDF)
+            .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
+            .build()
+        GmsDocumentScanning.getClient(options).getStartScanIntent(this)
+            .addOnSuccessListener { sender -> smartScan.launch(IntentSenderRequest.Builder(sender).build()) }
+            .addOnFailureListener { error ->
+                Toast.makeText(this, "Smart scanner unavailable: ${error.localizedMessage}", Toast.LENGTH_LONG).show()
+            }
+    }
     private val gallery = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { items ->
         items.forEach { uri -> runCatching {
             val file = File(folder, "import_${System.nanoTime()}.jpg")
@@ -131,8 +168,13 @@ class DocumentScannerActivity : ComponentActivity() {
             gravity = Gravity.CENTER
             typeface = android.graphics.Typeface.DEFAULT_BOLD
         }
-        top.addView(actionButton("×") { finish() }, LinearLayout.LayoutParams(dp(48), dp(48)))
+        top.addView(actionButton("×") { finish() }, LinearLayout.LayoutParams(dp(42), dp(48)))
         top.addView(countView, LinearLayout.LayoutParams(0, -1, 1f))
+        top.addView(TextView(this).apply {
+            text = "Smart"; textSize = 12f; gravity = Gravity.CENTER
+            setTextColor(0xFF00D6C8.toInt()); setPadding(dp(6), 0, dp(6), 0)
+            setOnClickListener { launchSmartScan() }
+        }, LinearLayout.LayoutParams(dp(48), dp(48)))
         top.addView(actionButton(if (flashMode == ImageCapture.FLASH_MODE_OFF) "ϟ" else "⚡") {
             flashMode = (flashMode + 1) % 3
             if (::capture.isInitialized) capture.flashMode = flashMode
