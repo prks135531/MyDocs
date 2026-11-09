@@ -592,18 +592,56 @@ class MainActivity : ComponentActivity() {
         navRow.addView(button("‹ Prev") { if (pageIndex > 0) { pageIndex--; render() } })
         navRow.addView(button("Next ›") { if (pageIndex < pages.lastIndex) { pageIndex++; render() } })
         navRow.addView(button("Grid") {
-            val grid = android.widget.GridLayout(this@MainActivity).apply { columnCount = 3; setPadding(dp(8), dp(8), dp(8), dp(8)) }
+            val grid = android.widget.GridLayout(this@MainActivity).apply {
+                columnCount = 3
+                setPadding(dp(10), dp(10), dp(10), dp(10))
+                setBackgroundColor(0xFF101010.toInt())
+                useDefaultMargins = true
+            }
             var gridDialog: AlertDialog? = null
             pages.forEachIndexed { index, uri ->
-                val cell = LinearLayout(this@MainActivity).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; setPadding(dp(4), dp(4), dp(4), dp(4)) }
-                val preview = ImageView(this@MainActivity).apply { layoutParams = LinearLayout.LayoutParams(dp(82), dp(100)); scaleType = ImageView.ScaleType.CENTER_CROP; setImageBitmap(decodeBitmapWithExif(uri, 180)) }
+                val cell = LinearLayout(this@MainActivity).apply {
+                    orientation = LinearLayout.VERTICAL
+                    gravity = Gravity.CENTER
+                    setPadding(dp(7), dp(7), dp(7), dp(7))
+                    background = android.graphics.drawable.GradientDrawable().apply {
+                        setColor(0xFF242424.toInt())
+                        cornerRadius = dp(10).toFloat()
+                        setStroke(dp(1), 0xFF3B4946.toInt())
+                    }
+                }
+                val preview = ImageView(this@MainActivity).apply {
+                    layoutParams = LinearLayout.LayoutParams(dp(88), dp(112))
+                    scaleType = ImageView.ScaleType.CENTER_CROP
+                    setBackgroundColor(Color.WHITE)
+                    setImageBitmap(decodeBitmapWithExif(uri, 180))
+                }
                 cell.addView(preview)
-                cell.addView(TextView(this@MainActivity).apply { text = "Page ${index + 1}"; setTextColor(Color.WHITE); gravity = Gravity.CENTER })
+                cell.addView(TextView(this@MainActivity).apply {
+                    text = "PAGE ${index + 1}"
+                    textSize = 11f
+                    typeface = android.graphics.Typeface.DEFAULT_BOLD
+                    setTextColor(0xFFE4E4E4.toInt())
+                    gravity = Gravity.CENTER
+                    setPadding(0, dp(7), 0, dp(2))
+                })
                 cell.setOnClickListener { pageIndex = index; gridDialog?.dismiss(); render() }
                 grid.addView(cell)
             }
             val gridScroll = ScrollView(this@MainActivity).apply { addView(grid) }
-            gridDialog = AlertDialog.Builder(this@MainActivity).setTitle("All Pages").setView(gridScroll).setNegativeButton("Close", null).create()
+            gridDialog = AlertDialog.Builder(this@MainActivity)
+                .setTitle("All Pages")
+                .setView(gridScroll)
+                .setNegativeButton("Close", null)
+                .create()
+            gridDialog?.setOnShowListener {
+                gridDialog?.window?.setBackgroundDrawableResource(android.R.color.black)
+                gridDialog?.window?.setLayout(
+                    (resources.displayMetrics.widthPixels * 0.94f).toInt(),
+                    (resources.displayMetrics.heightPixels * 0.78f).toInt()
+                )
+                gridDialog?.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(0xFF00D6C8.toInt())
+            }
             gridDialog?.show()
         })
         controls.addView(navRow)
