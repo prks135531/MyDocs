@@ -142,7 +142,7 @@ class DocumentScannerActivity : ComponentActivity() {
             setOnClickListener { action() }
         }
         fun captureButton(action: () -> Unit): TextView = TextView(this).apply {
-            text = "●"
+            text = " "
             textSize = 43f
             gravity = Gravity.CENTER
             setTextColor(Color.WHITE)
@@ -150,8 +150,8 @@ class DocumentScannerActivity : ComponentActivity() {
             isFocusable = true
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(Color.BLACK)
-                setStroke(dp(5), Color.WHITE)
+                setColor(0xFF00A99D.toInt())
+                setStroke(dp(5), 0xFFE8FFFC.toInt())
             }
             setOnClickListener { action() }
         }
@@ -159,7 +159,7 @@ class DocumentScannerActivity : ComponentActivity() {
         val top = LinearLayout(this).apply {
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(12), dp(8), dp(12), dp(8))
-            setBackgroundColor(0xFF101719.toInt())
+            setBackgroundColor(0xFF080A0A.toInt())
         }
         countView = TextView(this).apply {
             text = "0 pages"
@@ -317,12 +317,14 @@ class DocumentScannerActivity : ComponentActivity() {
         }
         val bottom = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(0xFF222222.toInt())
+            setBackgroundColor(0xFF080A0A.toInt())
+            setPadding(0, dp(4), 0, dp(6))
         }
         bottom.addView(modeRow, LinearLayout.LayoutParams(-1, dp(48)))
         bottom.addView(thumbnailScroll, LinearLayout.LayoutParams(-1, dp(44)))
         val controls = FrameLayout(this).apply {
-            setPadding(dp(18), dp(8), dp(18), dp(8))
+            setPadding(dp(22), dp(8), dp(22), dp(8))
+            setBackgroundColor(0xFF080A0A.toInt())
         }
         controls.addView(actionButton("▣", false) { gallery.launch("image/*") },
             FrameLayout.LayoutParams(dp(54), dp(54), Gravity.START or Gravity.CENTER_VERTICAL))

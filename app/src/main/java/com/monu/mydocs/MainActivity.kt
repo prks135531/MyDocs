@@ -257,7 +257,7 @@ class MainActivity : ComponentActivity() {
 
     private fun showHomeMenu() {
         val items = arrayOf("Create folder", "Import PDF", "Merge PDFs", "Split PDF", "Favorites", "Settings")
-        AlertDialog.Builder(this).setItems(items) { _, which ->
+        val dialog = AlertDialog.Builder(this).setTitle("MyDocs").setItems(items) { _, which ->
             when (which) {
                 0 -> createFolder()
                 1 -> importLauncher.launch(arrayOf("application/pdf"))
@@ -266,7 +266,14 @@ class MainActivity : ComponentActivity() {
                 4 -> { favoritesMode = true; refreshList() }
                 5 -> toast("Settings")
             }
-        }.show()
+        }.create()
+        dialog.setOnShowListener {
+            dialog.window?.setBackgroundDrawableResource(android.R.color.black)
+            dialog.listView.setBackgroundColor(0xFF171717.toInt())
+            dialog.listView.divider = android.graphics.drawable.ColorDrawable(0xFF303030.toInt())
+            dialog.listView.dividerHeight = dp(1)
+        }
+        dialog.show()
     }
 
     private fun actionCard(icon: String, title: String, subtitle: String, bg: Int, accent: Int, click: () -> Unit): View {
@@ -1447,8 +1454,8 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showFileMenu(file: File) {
-        val options = arrayOf("Open", "Share", if (isFavorite(file)) "Remove from Favorites" else "Add to Favorites", "Index text (OCR)", "View / Copy OCR text", "Rotate / Reorder Pages", "Rename", "Move to folder", "Delete")
-        AlertDialog.Builder(this).setTitle(file.name).setItems(options) { _, which ->
+        val options = arrayOf("Open document", "Share PDF", if (isFavorite(file)) "Remove from Favorites" else "Add to Favorites", "Index text (OCR)", "View / Copy OCR text", "Rotate / Reorder Pages", "Rename", "Move to folder", "Delete")
+        val dialog = AlertDialog.Builder(this).setTitle(file.name).setItems(options) { _, which ->
             when (which) {
                 0 -> openPdf(file)
                 1 -> sharePdf(file)
@@ -1460,7 +1467,14 @@ class MainActivity : ComponentActivity() {
                 7 -> moveFile(file)
                 8 -> AlertDialog.Builder(this).setMessage("Delete ${file.name}?").setNegativeButton("Cancel", null).setPositiveButton("Delete") { _, _ -> if (file.delete()) { removeFromRecentAndFavorites(file); ocrCacheFile(file).delete(); refreshList() } else toast("Delete failed") }.show()
             }
-        }.show()
+        }.create()
+        dialog.setOnShowListener {
+            dialog.window?.setBackgroundDrawableResource(android.R.color.black)
+            dialog.listView.setBackgroundColor(0xFF171717.toInt())
+            dialog.listView.divider = android.graphics.drawable.ColorDrawable(0xFF303030.toInt())
+            dialog.listView.dividerHeight = dp(1)
+        }
+        dialog.show()
     }
 
     private fun openPdf(file: File) {
