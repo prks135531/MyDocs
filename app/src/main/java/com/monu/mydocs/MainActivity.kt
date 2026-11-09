@@ -343,7 +343,7 @@ class MainActivity : ComponentActivity() {
         val brightnessBar = SeekBar(this).apply { max = 100; progress = 50 }
         val contrastBar = SeekBar(this).apply { max = 200; progress = 100 }
         val sharpnessBar = SeekBar(this).apply { max = 100; progress = 0 }
-        val paperSize = Spinner(this).apply { adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, arrayOf("Original size", "A4")) }
+        val paperSize = Spinner(this).apply { adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, PaperSizeCatalog.options) }
         val pageOrientation = Spinner(this).apply { adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, arrayOf("Auto orientation", "Portrait", "Landscape")) }
         val exportQuality = Spinner(this).apply { adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, arrayOf("High quality", "Balanced", "Smaller file")) }
         val pageMargins = Spinner(this).apply { adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, arrayOf("No margins", "Small margins", "Large margins")) }
@@ -629,16 +629,15 @@ class MainActivity : ComponentActivity() {
                         }
                         val originalW = bitmap.width
                         val originalH = bitmap.height
-                        val a4 = paperSize.selectedItemPosition == 1
-                        var pageW = if (a4) 595 else originalW
-                        var pageH = if (a4) 842 else originalH
+                        val selectedPaper = PaperSizeCatalog.sizes.getOrNull(paperSize.selectedItemPosition)
+                        var pageW = selectedPaper?.widthPoints ?: originalW
+                        var pageH = selectedPaper?.heightPoints ?: originalH
                         val landscape = pageOrientation.selectedItemPosition == 2 ||
                             (pageOrientation.selectedItemPosition == 0 && originalW > originalH)
-                        if (pageOrientation.selectedItemPosition != 0) {
-                            pageW = if (landscape) 842 else 595
-                            pageH = if (landscape) 595 else 842
-                        } else if (a4 && landscape) {
-                            pageW = 842; pageH = 595
+                        if (landscape && pageW < pageH) {
+                            val swap = pageW; pageW = pageH; pageH = swap
+                        } else if (!landscape && pageW > pageH) {
+                            val swap = pageW; pageW = pageH; pageH = swap
                         }
                         val info=PdfDocument.PageInfo.Builder(pageW,pageH,index+1).create()
                         val page=pdf.startPage(info)
