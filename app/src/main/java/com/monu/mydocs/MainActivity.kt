@@ -479,7 +479,17 @@ class MainActivity : ComponentActivity() {
             override fun onStartTrackingTouch(s: SeekBar?) {}
             override fun onStopTrackingTouch(s: SeekBar?) {}
         })
-        fun button(text: String, action: () -> Unit) = Button(this).apply { this.text = text; isAllCaps = false; textSize = 13f; setTextColor(Color.WHITE); backgroundTintList = android.content.res.ColorStateList.valueOf(0xFF303030.toInt()); setOnClickListener { action() } }
+        fun button(text: String, action: () -> Unit) = Button(this).apply {
+            this.text = text
+            isAllCaps = false
+            textSize = 12f
+            minHeight = dp(42)
+            minimumHeight = dp(42)
+            setPadding(dp(10), dp(4), dp(10), dp(4))
+            setTextColor(0xFFECEFF1.toInt())
+            backgroundTintList = android.content.res.ColorStateList.valueOf(0xFF303A39.toInt())
+            setOnClickListener { action() }
+        }
         refreshThumbnails = {
             thumbnailStrip.removeAllViews()
             pages.forEachIndexed { index, uri ->
@@ -487,7 +497,12 @@ class MainActivity : ComponentActivity() {
                     layoutParams = LinearLayout.LayoutParams(dp(66), dp(82)).apply { marginEnd = dp(8) }
                     scaleType = ImageView.ScaleType.CENTER_CROP
                     setPadding(dp(2), dp(2), dp(2), dp(2))
-                    setBackgroundColor(if (index == pageIndex) 0xFF00A99D.toInt() else 0xFF34413E.toInt())
+                    background = android.graphics.drawable.GradientDrawable().apply {
+                        cornerRadius = dp(7).toFloat()
+                        setColor(if (index == pageIndex) 0xFF087F78.toInt() else 0xFF34413E.toInt())
+                        setStroke(dp(if (index == pageIndex) 2 else 1), if (index == pageIndex) 0xFF5CE4D5.toInt() else 0xFF52605D.toInt())
+                    }
+                    clipToOutline = true
                     contentDescription = "Page ${index + 1}"
                     val bmp = decodeBitmapWithExif(uri, 180)
                     if (bmp != null) setImageBitmap(bmp)
