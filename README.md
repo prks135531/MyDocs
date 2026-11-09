@@ -1,34 +1,26 @@
 # MyDocs
 
-MyDocs is an Android document scanning and PDF management app.
+MyDocs is an Android document scanner and local PDF library.
 
-## Project status
+## Current starter build
+- Scan multi-page documents with Google's ML Kit Document Scanner UI.
+- Scanner can export PDF and JPEG; PDF is stored in the app's private MyDocs folder.
+- Import existing PDFs using Android's document picker.
+- List, open, share, rename, and delete saved PDFs.
+- No account or cloud service required for this starter version.
 
-This repository is being rebuilt with a clean Android/Kotlin foundation. The first foundation commit includes:
-- Android Gradle project setup
-- Kotlin + Jetpack Compose UI
-- Initial home, files and tools navigation
-- CameraX dependencies for the custom scanner implementation
-- GitHub Actions debug APK workflow
+## Build APK
+GitHub Actions runs on push to `main`/`master` or via **Actions → Build MyDocs APK → Run workflow**.
+The generated APK is available under the workflow run's **Artifacts** section as `MyDocs-debug-apk`.
 
-## Build
-
-The project uses JDK 17 and Gradle 8.9 or compatible.
+## Build locally
+Requires JDK 17, Android SDK 35, and Gradle 8.9:
 
 ```bash
 gradle assembleDebug
 ```
 
-The debug APK is generated at:
+APK output: `app/build/outputs/apk/debug/app-debug.apk`.
 
-`app/build/outputs/apk/debug/app-debug.apk`
-
-## Planned scanner flow
-
-1. Camera capture screen without the unwanted green overlay.
-2. Separate crop and adjustment step.
-3. Separate review step with Next navigation.
-4. Multi-page capture and document thumbnails.
-5. Image enhancement, PDF export and document management.
-
-Package: `com.monu.mydocs`
+## Planned next modules
+Folder management, Trash/restore, PDF merge/split/rotate/reorder, ID-card/passport presets, settings, and local backup/restore are planned follow-up milestones and are not yet implemented in this starter build.
